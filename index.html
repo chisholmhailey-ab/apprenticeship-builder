@@ -131,6 +131,8 @@
     .nav-logo img {
       height: 52px;
       width: auto;
+      background: transparent;
+      mix-blend-mode: lighten;
     }
 
     .nav-links {
@@ -212,7 +214,7 @@
     #hero {
       min-height: 100vh;
       background: linear-gradient(135deg, rgba(13,31,60,0.88) 0%, rgba(13,31,60,0.72) 100%),
-                  url('truck-clean.jpg') center center / cover no-repeat;
+                  url('unnamed.jpg') center center / cover no-repeat;
       display: flex;
       align-items: center;
       padding: 8rem 1.5rem 5rem;
@@ -860,6 +862,32 @@
       min-height: 300px;
     }
 
+    /* Submit button — gold with navy text */
+    .hs-form-frame .hs-button,
+    .hs-form-frame input[type="submit"],
+    .hs-form-frame .hs-button.primary {
+      background-color: #C89535 !important;
+      background: #C89535 !important;
+      color: #0D1F3C !important;
+      border-color: #C89535 !important;
+      font-family: 'Lato', sans-serif !important;
+      font-weight: 700 !important;
+    }
+    .hs-form-frame .hs-button:hover,
+    .hs-form-frame input[type="submit"]:hover {
+      background-color: #D9A84A !important;
+      background: #D9A84A !important;
+      border-color: #D9A84A !important;
+    }
+
+    /* Hide HubSpot "Create your own free forms" branding */
+    .hs-form__virality-link,
+    .hs-form__virality-link-container,
+    .hubspot-link__container,
+    .hs-form-boomerang {
+      display: none !important;
+    }
+
     @media (max-width: 900px) {
       .contact-inner {
         grid-template-columns: 1fr;
@@ -1314,7 +1342,7 @@
       </div>
       <div class="gallery-grid">
         <div class="gallery-item reveal">
-          <img src="truck-clean.jpg" alt="ApprenticeshipBuilder mobile unit">
+          <img src="unnamed.jpg" alt="ApprenticeshipBuilder mobile unit">
         </div>
         <div class="gallery-item reveal">
           <img src="truck-vr.jpg" alt="VR trades exploration in action">
@@ -1422,6 +1450,36 @@
     });
 
     revealEls.forEach(el => observer.observe(el));
+
+    // HubSpot form: set phone to Canada (+1) and hide branding
+    function patchHubSpotForm() {
+      // Phone country → Canada via intl-tel-input API
+      document.querySelectorAll('.hs-form-frame input[type="tel"]').forEach(input => {
+        try {
+          const iti = window.intlTelInputGlobals && window.intlTelInputGlobals.getInstance(input);
+          if (iti && iti.getSelectedCountryData().iso2 !== 'ca') {
+            iti.setCountry('ca');
+          }
+        } catch(e) {}
+        // Fallback: set the hidden country-code select if it exists
+        const wrap = input.closest('.hs-fieldtype-phonenumber, .input');
+        if (wrap) {
+          const sel = wrap.querySelector('select');
+          if (sel && sel.value !== 'ca') { sel.value = 'ca'; sel.dispatchEvent(new Event('change')); }
+        }
+      });
+
+      // Hide HubSpot branding badge (rendered asynchronously)
+      document.querySelectorAll(
+        '.hs-form__virality-link, .hs-form__virality-link-container, .hubspot-link__container, .hs-form-boomerang, [class*="virality"]'
+      ).forEach(el => { el.style.display = 'none'; });
+    }
+
+    const hsFormObserver = new MutationObserver(patchHubSpotForm);
+    hsFormObserver.observe(document.body, { childList: true, subtree: true });
+    // Also run once after a delay in case mutations already settled
+    setTimeout(patchHubSpotForm, 2000);
+    setTimeout(patchHubSpotForm, 5000);
 
     // Active nav link on scroll
     const sections = document.querySelectorAll('section[id]');
